@@ -1,0 +1,5 @@
+[package]
+
+name = "rustimage"
+version = "0.0.1"
+authors = [ "Dr. David Alan Gilbert <dave@treblig.org>" ]
