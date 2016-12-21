@@ -3,7 +3,12 @@ use std::io::BufReader;
 use std::io::prelude::*;
 use std::fs::File;
 
+use string::*;
+
 pub struct Image {
+  width: usize,
+  height: usize,
+  data: Box<[u8]>,
 }
 
 #[derive(Debug)]
@@ -11,60 +16,12 @@ pub enum ImageErr {
   IO(io::Error),
   NumErr,
   BadHeader(String),
+  WrongSubtype(String),
 }
 
 impl From<io::Error> for ImageErr {
   fn from(err: io::Error) -> ImageErr {
     ImageErr::IO(err)
-  }
-}
-
-// TODO: Split these stirng parsers out into a separate file
-/// Skip whitespace
-pub fn skip_whitespace(f: &mut BufRead) -> Result<(), io::Error> {
-  'search: loop {
-    {
-      let buf = try!(f.fill_buf());
-      if !((buf[0] as char).is_whitespace()) {
-        break 'search;
-      }
-    }
-    f.consume(1);
-  }
- 
-  Ok(())
-}
-
-/// Reads an integer from the stream
-/// Note: Consumes the following white space
-pub fn read_integer(f: &mut BufRead) -> Result<usize, ImageErr> {
-  // TODO: Use peekable to avoid consuming the terminating ws
-  let mut it = f.bytes();
-  let mut result : usize = 0;
-  let mut have_digit : bool = false;
-
-  loop {
-    match it.next() {
-      Some(r) => {
-        let b = try!(r);
-        if (b as char).is_digit(10) {
-          have_digit = true;
-          result = result * 10 + (b - ('0' as u8)) as usize;
-        } else {
-          if !(b as char).is_whitespace() {
-            return Err(ImageErr::NumErr);
-          }
-          break;
-        }
-      }
-      None => { break }
-    }
-  }
-
-  if have_digit {
-    Ok(result)
-  } else {
-    Err(ImageErr::NumErr)
   }
 }
 
@@ -111,14 +68,35 @@ pub fn read_pnm_header(f: &mut BufRead) -> Result<(usize, (usize, usize)), Image
 }
 
 pub fn load_pgm(file_name: String) -> Result<Image, ImageErr> {
-  let mut tmp_byte : [u8; 1] = [0; 1];
   let mut r = BufReader::new(try!(File::open(file_name)));
 
-  let (pnm_type, (width, height)) = try!(read_pnm_header(&mut r));
+  let (pnm_type, (my_width, my_height)) = try!(read_pnm_header(&mut r));
 
-  // Dummy read - more later
-  try!(r.read_exact(&mut tmp_byte));
-  println!("Got pgm type {} {}x{}", pnm_type, width, height);
-  Ok(Image {})
+  match pnm_type {
+    2 => return Err(ImageErr::WrongSubtype(String::from("Plain PGM not supported"))),
+    5 => (), // that's normal binary PGM that we support
+    _ => return Err(ImageErr::WrongSubtype(format!("PNM type {} is not a PGM and is not supported", pnm_type))),
+  }
+
+  if my_width == 0 || my_height == 0 {
+    return Err(ImageErr::BadHeader(String::from("Width/height can't be 0")));
+  }
+
+  let mut my_data = vec![0 as u8; my_width * my_height];
+  try!(r.read_exact(&mut my_data));
+  let result : Image = Image { width: my_width, height: my_height, data: my_data.into_boxed_slice() };
+
+  println!("Got pgm type {} {}x{}", pnm_type, my_width, my_height);
+
+  Ok(result)
+}
+
+impl Image {
+  pub fn save_pgm(&self, file_name: String) -> Result<(), ImageErr> {
+    let mut f = try!(File::create(file_name));
+    try!(write!(f, "P5\n{} {}\n255\n", self.width, self.height));
+    try!(f.write_all(&self.data));
+    Ok(())
+  }
 }
 
