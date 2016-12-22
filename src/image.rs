@@ -1,14 +1,30 @@
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
+use std::ops;
 use std::fs::File;
 
 use string::*;
 
+// points in this image are indexed using (x: usize, y: usize) tuples
+// (0,0) is top left
 pub struct Image {
   width: usize,
   height: usize,
   data: Box<[u8]>,
+}
+
+#[derive(Debug)]
+pub struct Point {
+  pub x: usize,
+  pub y: usize
+}
+
+pub enum Direction {
+  Down, // x= 0, y= 1
+  Up,   // x= 0, y=-1
+  Left, // x=-1, y= 0
+  Right,// x= 1, y= 0
 }
 
 #[derive(Debug)]
@@ -100,3 +116,58 @@ impl Image {
   }
 }
 
+impl ops::Index<Point> for Image {
+  type Output = u8;
+
+  fn index(&self, p: Point) -> &u8 {
+    &self.data[p.x + p.y * self.width]
+  }
+}
+
+impl ops::IndexMut<Point> for Image {
+  fn index_mut(&mut self, p: Point) -> &mut u8 {
+    &mut self.data[p.x + p.y * self.width]
+  }
+}
+
+impl Point {
+  pub fn step(&mut self, d: Direction, i: &Image) -> bool {
+    let &mut tomod;
+    let &mut limit;
+    let inc : i8;
+    match d {
+      Direction::Down => {
+          tomod = &mut self.y;
+          limit = i.height;
+          inc   = 1
+        },
+      Direction::Up => {
+          tomod = &mut self.y;
+          limit = 0;
+          inc   = -1
+        },
+      Direction::Left => {
+          tomod = &mut self.x;
+          limit = 0;
+          inc   = -1
+        },
+      Direction::Right => {
+          tomod = &mut self.x;
+          limit = i.width;
+          inc   = 1
+        },
+    }
+    
+    if (inc > 0 && *tomod >= limit) ||
+       (inc < 0 && *tomod == 0) {
+      return false;
+    }
+    if inc < 0 {
+      *tomod = *tomod - 1;
+    } else {
+      *tomod = *tomod + 1;
+    }
+
+    true
+  }
+}
