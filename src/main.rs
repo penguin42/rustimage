@@ -1,6 +1,7 @@
 use std::env;
 mod image;
 mod string;
+mod box_finder;
 
 fn main() {
   let mut our_args = env::args();
@@ -12,16 +13,14 @@ fn main() {
   println!("Filename = {}", file_name);
 
   let in_image = image::load_pgm(file_name).unwrap();
-
-  let mut here = image::Point { x: 2, y: 0 };
-
-  println!("Top left pixel={}", in_image[image::Point { x: 0, y: 0 }]);
-  println!("Here={:?}", here);
-  println!("Here step {} down={:?}", here.step(image::Direction::Down, &in_image), here);
-  println!("Here step {} left={:?}", here.step(image::Direction::Left, &in_image), here);
-  println!("Here step {} left={:?}", here.step(image::Direction::Left, &in_image), here);
-  println!("Here step {} left={:?}", here.step(image::Direction::Left, &in_image), here);
-  println!("Here step {} right={:?}", here.step(image::Direction::Right, &in_image), here);
-  println!("Here step {} up={:?}", here.step(image::Direction::Up, &in_image), here);
+  let image_size = in_image.get_size();
+  let left_middle = image::Point { x: 0, y: image_size.y/2 };
+  let right_middle = image::Point { x: image_size.x - 1, y: image_size.y/2 };
+  let top_middle = image::Point { x: image_size.x/2, y: 0 };
+  let bottom_middle = image::Point { x: image_size.x/2, y: image_size.y-1 };
+  println!("- > -edge search result: {:?}", box_finder::edge_finder(&in_image, &left_middle, image::Direction::Right));
+  println!("- < -edge search result: {:?}", box_finder::edge_finder(&in_image, &right_middle, image::Direction::Left));
+  println!("- v -edge search result: {:?}", box_finder::edge_finder(&in_image, &top_middle, image::Direction::Down));
+  println!("- ^ -edge search result: {:?}", box_finder::edge_finder(&in_image, &bottom_middle, image::Direction::Up));
 }
 

@@ -14,12 +14,13 @@ pub struct Image {
   data: Box<[u8]>,
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub struct Point {
   pub x: usize,
   pub y: usize
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum Direction {
   Down, // x= 0, y= 1
   Up,   // x= 0, y=-1
@@ -114,6 +115,12 @@ impl Image {
     try!(f.write_all(&self.data));
     Ok(())
   }
+
+  // TODO: This should be a trait for things that have a 2d size
+  // The point returned is one past the edge of the image
+  pub fn get_size(&self) -> Point {
+    Point { x: self.width, y: self.height }
+  }
 }
 
 impl ops::Index<Point> for Image {
@@ -138,7 +145,7 @@ impl Point {
     match d {
       Direction::Down => {
           tomod = &mut self.y;
-          limit = i.height;
+          limit = i.get_size().y;
           inc   = 1
         },
       Direction::Up => {
@@ -153,7 +160,7 @@ impl Point {
         },
       Direction::Right => {
           tomod = &mut self.x;
-          limit = i.width;
+          limit = i.get_size().x;
           inc   = 1
         },
     }
@@ -170,4 +177,30 @@ impl Point {
 
     true
   }
+
+  pub fn distance(&self, other: &Point) -> f64 {
+    let xdiff = self.x as f64 - other.x as f64;
+    let ydiff = self.y as f64 - other.y as f64;
+
+    (xdiff*xdiff + ydiff*ydiff).sqrt()
+  }
 }
+
+impl Direction {
+  pub fn clockwise(self) -> Direction {
+    match self {
+      Direction::Down => Direction::Left,
+      Direction::Left => Direction::Up,
+      Direction::Up => Direction::Right,
+      Direction::Right => Direction::Down,
+    }
+  }
+  pub fn cntr_clockwise(self) -> Direction {
+    match self {
+      Direction::Down => Direction::Right,
+      Direction::Right => Direction::Up,
+      Direction::Up => Direction::Left,
+      Direction::Left => Direction::Down,
+    }
+  }
+} 
