@@ -138,7 +138,7 @@ impl ops::IndexMut<Point> for Image {
 }
 
 impl Point {
-  pub fn step(&mut self, d: Direction, i: &Image) -> bool {
+  pub fn step(&mut self, d: Direction, i: &Image, amount: usize) -> bool {
     let &mut tomod;
     let &mut limit;
     let inc : i8;
@@ -165,14 +165,14 @@ impl Point {
         },
     }
     
-    if (inc > 0 && *tomod >= limit) ||
-       (inc < 0 && *tomod == 0) {
+    if (inc > 0 && (amount >= limit || *tomod >= limit-amount)) ||
+       (inc < 0 && *tomod < amount) {
       return false;
     }
     if inc < 0 {
-      *tomod = *tomod - 1;
+      *tomod = *tomod - amount;
     } else {
-      *tomod = *tomod + 1;
+      *tomod = *tomod + amount;
     }
 
     true
