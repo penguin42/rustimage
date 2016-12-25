@@ -1,4 +1,5 @@
 use image::*;
+use point_line::*;
 use std::f64;
 
 const LIGHT_TO_DARK_THRESHOLD : u8 = 65;
