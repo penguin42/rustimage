@@ -84,7 +84,7 @@ pub fn read_pnm_header(f: &mut BufRead) -> Result<(usize, (usize, usize)), Image
   Ok((subtype as usize, (width, height)))
 }
 
-pub fn load_pgm(file_name: String) -> Result<Image, ImageErr> {
+pub fn load_pgm(file_name: &String) -> Result<Image, ImageErr> {
   let mut r = BufReader::new(try!(File::open(file_name)));
 
   let (pnm_type, (my_width, my_height)) = try!(read_pnm_header(&mut r));

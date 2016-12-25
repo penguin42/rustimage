@@ -75,6 +75,8 @@ fn find_corner(i: &Image, d: Direction, line_width: f64,
     cur_mid = proto_outer;
     cur_mid.step(d.clockwise(), i, (distance/2.0) as usize);
     cur_inner = proto_inner;
+    //println!("FSVG: <circle cx=\"{}\" cy=\"{}\" r=\"2px\" style=\"stroke:rgb(0,255,0);stroke-width=1\"",
+    //         cur_mid.x, cur_mid.y);
   }
   cur_mid
 }
