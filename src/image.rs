@@ -1,3 +1,4 @@
+use std::f64;
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;
@@ -27,6 +28,8 @@ pub enum Direction {
   Left, // x=-1, y= 0
   Right,// x= 1, y= 0
 }
+
+pub type Line = (Point, Point);
 
 #[derive(Debug)]
 pub enum ImageErr {
@@ -183,6 +186,19 @@ impl Point {
     let ydiff = self.y as f64 - other.y as f64;
 
     (xdiff*xdiff + ydiff*ydiff).sqrt()
+  }
+
+  pub fn line_distance(&self, line: &(Point, Point)) -> f64 {
+    let (linep1, linep2) = *line;
+    let l1x = linep1.x as f64;
+    let l1y = linep1.y as f64;
+    let l2x = linep2.x as f64;
+    let l2y = linep2.y as f64;
+    // from https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line
+    let numer = ((l2y - l1y) * (self.x as f64) - (l2x - l1x) * (self.y as f64) +
+                    l2x * l1y - l2y * l1x).abs();
+    let denom = ((l2y - l1y).powi(2) + (l2x - l1x).powi(2)).sqrt();
+    numer/denom
   }
 }
 

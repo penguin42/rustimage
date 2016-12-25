@@ -1,7 +1,11 @@
 use image::*;
+use std::f64;
 
 const LIGHT_TO_DARK_THRESHOLD : u8 = 65;
 const DARK_TO_LIGHT_THRESHOLD : u8 = 105;
+const PATH_LINE_BASE_FRAC : f64 = 0.95;
+const PATH_LINE_END_FRAC : f64 = 0.90;
+const PATH_LINE_SAMPLES : usize = 10;
 
 // Hmm this might be tricky - my top edge brightness is so bridgt I'm seeing speckling in the line
 // the other edges we're good down to about 25 as black  - same problem on bottom edge
@@ -26,7 +30,11 @@ fn step_to_light(i: &Image, start: &Point, d: Direction) -> Point {
 // We're given the bounds and middle of a line and expected to find where the end of it is in
 // direction 'd'.  Note the 'd' is a compass direction since we don't know the slope of the line
 fn find_corner(i: &Image, d: Direction, line_width: f64,
-              inner_start: &Point, mid_start: &Point, outer_start: &Point) -> Point {
+              inner_start: &Point,
+              mid_start: &Point,
+              outer_start: &Point) -> Line {
+  // A history of our mid points, we'll use it to synthesize a line at the end
+  let mut history = Vec::new();
 
   let mut cur_inner = *inner_start;
   let mut cur_mid =   *mid_start;
@@ -37,6 +45,7 @@ fn find_corner(i: &Image, d: Direction, line_width: f64,
 
   println!("find_corner: {:?}/{:?}/{:?} going {:?}", inner_start, mid_start, outer_start, d);
   loop {
+    history.push(cur_mid);
     found = false;
     if !cur_inner.step(d, i, 1) ||
        !cur_mid.step(d, i, 1) ||
@@ -78,10 +87,59 @@ fn find_corner(i: &Image, d: Direction, line_width: f64,
     //println!("FSVG: <circle cx=\"{}\" cy=\"{}\" r=\"2px\" style=\"stroke:rgb(0,255,0);stroke-width=1\"",
     //         cur_mid.x, cur_mid.y);
   }
-  cur_mid
+
+  // Synthesise a vector from the set of midpoints we've followed; the line is curved
+  // so we use some near the end, but not right at the end because we tend to swing
+  // off a bit as we approach the new edge (because we always recentre the midpoint on the middle of the
+  // black range, and we also tend not to have clean corners)
+
+  // So we try PATH_LINE_SAMPLES out of each of two sets PATH_LINE_BASE/END_FRAC along
+  // and build a line from each pair; then figure out which is the best match to the points
+  let path_len = history.len();
+
+  let outer_base = (path_len as f64 * PATH_LINE_BASE_FRAC) as usize;
+  let inner_base = (path_len as f64 * PATH_LINE_END_FRAC) as usize;
+
+  println!("path_len={} outer_base={} inner_base={}", path_len, outer_base, inner_base);
+
+  let mut best_score = f64::MAX;
+  let mut best_line = (Point { x:0, y:0 }, Point { x:0, y:0 });
+  for outer_index in 0..PATH_LINE_SAMPLES {
+    let outer_point = history[outer_base + outer_index];
+
+    for inner_index in 0..PATH_LINE_SAMPLES {
+      let inner_point = history[inner_base + inner_index];
+      
+      let line = (outer_point, inner_point);
+
+      // Build a score for this line by looping over all the
+      // (other) points and measuring their distance from the line
+      // so loop over both inner and outer points and get distance
+      let mut score = 0.0;
+
+      for score_index in 0..PATH_LINE_SAMPLES {
+        if score_index != outer_index {
+          score += history[outer_base + score_index].line_distance(&line);
+        }
+      } 
+      for score_index in 0..PATH_LINE_SAMPLES {
+        if score_index != inner_index {
+          score += history[inner_base + score_index].line_distance(&line);
+        }
+      } 
+
+      if score < best_score {
+        best_line = line;
+        best_score = score;
+      }
+    }
+  } 
+  //println!("find_corner for {:?} point={:?} best_score={} best_line={:?}",
+  //         d, cur_mid, best_score, best_line);
+  best_line
 }
 
-pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Point,Point) {
+pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line) {
   let mut cur = *start;
 
   println!("edge_finder: {:?} going {:?}", start, d);
