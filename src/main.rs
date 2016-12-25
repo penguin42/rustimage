@@ -50,6 +50,17 @@ fn main() {
   plot_svg_line(&mut svgf, &bottom_edge_line_left, green_1_style).unwrap();
   plot_svg_line(&mut svgf, &bottom_edge_line_right, green_1_style).unwrap();
 
+  let top_left = point_line::line_intersection(&left_edge_line_top, &top_edge_line_left);
+  let top_right = point_line::line_intersection(&right_edge_line_top, &top_edge_line_right);
+  let bottom_left = point_line::line_intersection(&left_edge_line_bottom, &bottom_edge_line_left);
+  let bottom_right = point_line::line_intersection(&right_edge_line_bottom, &bottom_edge_line_right);
+
+  let red_1_style="stroke:rgb(255,0,0);stroke-width:1";
+  plot_svg_line(&mut svgf, &(top_left, top_right), red_1_style).unwrap();
+  plot_svg_line(&mut svgf, &(top_right, bottom_right), red_1_style).unwrap();
+  plot_svg_line(&mut svgf, &(bottom_left, bottom_right), red_1_style).unwrap();
+  plot_svg_line(&mut svgf, &(top_left, bottom_left), red_1_style).unwrap();
+  
   writeln!(svgf, "</svg>").unwrap();
 }
 

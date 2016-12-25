@@ -98,3 +98,31 @@ impl Direction {
     }
   }
 } 
+
+pub fn line_intersection(l1 : &Line, l2 : &Line) -> Point {
+  let (l1p1, l1p2) = *l1;
+  let (l2p1, l2p2) = *l2;
+  let l1p1x = l1p1.x as f64;
+  let l1p1y = l1p1.y as f64;
+  let l1p2x = l1p2.x as f64;
+  let l1p2y = l1p2.y as f64;
+  let l2p1x = l2p1.x as f64;
+  let l2p1y = l2p1.y as f64;
+  let l2p2x = l2p2.x as f64;
+  let l2p2y = l2p2.y as f64;
+
+  // From https://en.wikipedia.org/wiki/Line%E2%80%93line_intersection#Given_two_points_on_each_line
+  let xnumer = (l1p1x * l1p2y - l1p1y * l1p2x) * (l2p1x - l2p2x) -
+               (l1p1x - l1p2x) * (l2p1x * l2p2y - l2p1y * l2p2x);
+  let denom = (l1p1x - l1p2x) * (l2p1y - l2p2y) -
+              (l1p1y - l1p2y) * (l2p1x - l2p2x);
+
+  let ynumer = (l1p1x * l1p2y - l1p1y * l1p2x) * (l2p1y - l2p2y) -
+               (l1p1y - l1p2y) * (l2p1x * l2p2y - l2p1y * l2p2x);
+
+  let x = xnumer / denom;
+  let y = ynumer / denom;
+
+  // TODO: We should return this as an f64 point
+  Point { x: x as usize, y: y as usize }
+}
