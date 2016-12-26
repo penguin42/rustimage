@@ -9,6 +9,7 @@ use image::ImageErr;
 pub fn skip_whitespace(f: &mut BufRead) -> Result<(), io::Error> {
   let mut in_comment = false;
 
+  // TODO: This really needs to be using the iterator - fill_buf isn't safe with interruptibles etc
   'search: loop {
     {
       let buf = try!(f.fill_buf());
@@ -33,25 +34,19 @@ pub fn skip_whitespace(f: &mut BufRead) -> Result<(), io::Error> {
 /// Note: Consumes the following white space
 pub fn read_integer(f: &mut BufRead) -> Result<usize, ImageErr> {
   // TODO: Use peekable to avoid consuming the terminating ws
-  let mut it = f.bytes();
   let mut result : usize = 0;
   let mut have_digit : bool = false;
 
-  loop {
-    match it.next() {
-      Some(r) => {
-        let b = try!(r);
-        if (b as char).is_digit(10) {
-          have_digit = true;
-          result = result * 10 + (b - ('0' as u8)) as usize;
-        } else {
-          if !(b as char).is_whitespace() {
-            return Err(ImageErr::NumErr);
-          }
-          break;
-        }
+  for r in f.bytes() {
+    let b = try!(r);
+    if (b as char).is_digit(10) {
+      have_digit = true;
+      result = result * 10 + (b - ('0' as u8)) as usize;
+    } else {
+      if !(b as char).is_whitespace() {
+        return Err(ImageErr::NumErr);
       }
-      None => { break }
+      break;
     }
   }
 
