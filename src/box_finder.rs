@@ -145,7 +145,7 @@ fn gen_edge_vector(history: &Vec<Point>) -> Line {
   best_line
 }
 
-pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line) {
+pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) {
   let mut cur = *start;
 
   println!("edge_finder: {:?} going {:?}", start, d);
@@ -166,16 +166,28 @@ pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line) {
   // Step3: Find the inner edge of the line
   let inner_edge_marker = step_to_light(i, &cur, d);
 
+  // Step4: Find the midpoint of the edge
   let line_width = inner_edge_marker.distance(&outer_edge_marker);
   println!("Line width={}", line_width); 
 
   let mut mid_point = outer_edge_marker;
   mid_point.step(d, i, (line_width / 2.0) as usize);
 
-  let vec1 = follow_edge(i, d.cntr_clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+  // Step5: Follow the edges to the end/corners
+  let mut vec1 = follow_edge(i, d.cntr_clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+  let mut vec2 = follow_edge(i, d.clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+
+  // Step6: Generate vectors pointing along the edge near the corner
+  // the caller then combines the vectors from edges that touch to find
+  // the corner
   let corner1 = gen_edge_vector(&vec1);
-  let vec2 = follow_edge(i, d.clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
   let corner2 = gen_edge_vector(&vec2);
-  (corner1, corner2)
+
+  // Step7: Find a midpoint on the edge to find as a curve point
+  vec1.reverse();
+  vec1.append(&mut vec2); // Hmm this dupes the start point?
+
+  let middle_point = vec1[vec1.len()/2];
+  (corner1, corner2, middle_point)
 }
 

@@ -9,6 +9,24 @@ pub struct Point {
 }
 
 #[derive(Copy, Clone, Debug)]
+pub struct Pointf {
+  pub x: f64,
+  pub y: f64
+}
+
+impl From<Point> for Pointf {
+  fn from(p : Point) -> Pointf {
+    Pointf { x: p.x as f64, y: p.y as f64 }
+  }
+}
+
+impl From<Pointf> for Point {
+  fn from(p : Pointf) -> Point {
+    Point { x: p.x as usize, y: p.y as usize }
+  }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum Direction {
   Down, // x= 0, y= 1
   Up,   // x= 0, y=-1
