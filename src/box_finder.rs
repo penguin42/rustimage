@@ -30,10 +30,10 @@ fn step_to_light(i: &Image, start: &Point, d: Direction) -> Point {
 
 // We're given the bounds and middle of a line and expected to find where the end of it is in
 // direction 'd'.  Note the 'd' is a compass direction since we don't know the slope of the line
-fn find_corner(i: &Image, d: Direction, line_width: f64,
+fn follow_edge(i: &Image, d: Direction, line_width: f64,
               inner_start: &Point,
               mid_start: &Point,
-              outer_start: &Point) -> Line {
+              outer_start: &Point) -> Vec<Point> {
   // A history of our mid points, we'll use it to synthesize a line at the end
   let mut history = Vec::new();
 
@@ -89,6 +89,11 @@ fn find_corner(i: &Image, d: Direction, line_width: f64,
     //         cur_mid.x, cur_mid.y);
   }
 
+  history
+}
+
+// Given a vector of points along an edge, generate a line pointing in the direction of the end point
+fn gen_edge_vector(history: &Vec<Point>) -> Line {
   // Synthesise a vector from the set of midpoints we've followed; the line is curved
   // so we use some near the end, but not right at the end because we tend to swing
   // off a bit as we approach the new edge (because we always recentre the midpoint on the middle of the
@@ -167,8 +172,10 @@ pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line) {
   let mut mid_point = outer_edge_marker;
   mid_point.step(d, i, (line_width / 2.0) as usize);
 
-  let corner1 = find_corner(i, d.cntr_clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
-  let corner2 = find_corner(i, d.clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+  let vec1 = follow_edge(i, d.cntr_clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+  let corner1 = gen_edge_vector(&vec1);
+  let vec2 = follow_edge(i, d.clockwise(), line_width, &inner_edge_marker, &mid_point, &outer_edge_marker);
+  let corner2 = gen_edge_vector(&vec2);
   (corner1, corner2)
 }
 
