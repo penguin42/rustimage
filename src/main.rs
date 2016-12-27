@@ -7,6 +7,7 @@ mod curve;
 mod image;
 mod point_line;
 mod string;
+mod transform;
 
 use point_line::*;
 use image::*;
@@ -42,19 +43,39 @@ fn main() {
   let in_image = Image::load_pgm(&file_name).unwrap();
   let image_size = in_image.get_size();
 
-  let mut svgf = File::create("debug.svg").unwrap();
-  writeln!(svgf, "<svg height=\"{}px\" width=\"{}px\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">", image_size.x, image_size.y).unwrap();
-  writeln!(svgf, "  <image xlink:href=\"{}\" x=\"0\" y=\"0\" width=\"{}px\" height=\"{}px\"/>", file_name, image_size.x, image_size.y).unwrap();
-
   let (top_left, top_edge_mid, top_right,
                  right_edge_mid, bottom_right,
                  bottom_edge_mid, bottom_left,
                  left_edge_mid) = box_finder::box_finder(&in_image);
 
-  let green_1_style="stroke:rgb(0,255,0);stroke-width:1";
-  let cyan_1_style="stroke:rgb(0,255,255);stroke-width:1";
-  plot_svg_line(&mut svgf, &(left_edge_mid, right_edge_mid), cyan_1_style).unwrap();
-  plot_svg_line(&mut svgf, &(top_edge_mid, bottom_edge_mid), cyan_1_style).unwrap();
+  let mut out_image = Image::new(4000,2000); // TODO: Make size configurable
+
+  let hline = (left_edge_mid, right_edge_mid);
+  let vline = (top_edge_mid, bottom_edge_mid);
+
+  let left_bez = curve::Bezierq::through(Pointf::from(top_left),
+                                        Pointf::from(left_edge_mid),
+                                        Pointf::from(bottom_left),
+                                        0.5);
+  let right_bez = curve::Bezierq::through(Pointf::from(top_right),
+                                        Pointf::from(right_edge_mid),
+                                        Pointf::from(bottom_right),
+                                        0.5);
+  // Hmm I'm not confident about this choice of the midpoint
+  let midpoint = line_intersection(&hline, &vline);
+  let midv_bez = curve::Bezierq::through(Pointf::from(top_edge_mid),
+                                        Pointf::from(midpoint),
+                                        Pointf::from(bottom_edge_mid),
+                                        0.5);
+
+  transform::transform(&in_image, &mut out_image,
+                       &left_bez, &midv_bez, &right_bez);
+
+  out_image.save_pgm(format!("debug.pgm")).unwrap();
+
+  let mut svgf = File::create("debug.svg").unwrap();
+  writeln!(svgf, "<svg height=\"{}px\" width=\"{}px\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\">", image_size.x, image_size.y).unwrap();
+  writeln!(svgf, "  <image xlink:href=\"{}\" x=\"0\" y=\"0\" width=\"{}px\" height=\"{}px\"/>", file_name, image_size.x, image_size.y).unwrap();
 
   let top_bez = curve::Bezierq::through(Pointf::from(top_left),
                                         Pointf::from(top_edge_mid),
@@ -64,19 +85,18 @@ fn main() {
                                         Pointf::from(bottom_edge_mid),
                                         Pointf::from(bottom_right),
                                         0.5);
-  let left_bez = curve::Bezierq::through(Pointf::from(bottom_left),
-                                        Pointf::from(left_edge_mid),
-                                        Pointf::from(top_left),
-                                        0.5);
-  let right_bez = curve::Bezierq::through(Pointf::from(bottom_right),
-                                        Pointf::from(right_edge_mid),
-                                        Pointf::from(top_right),
-                                        0.5);
+
+  let green_1_style="stroke:rgb(0,255,0);stroke-width:1";
+  let cyan_1_style="stroke:rgb(0,255,255);stroke-width:1";
+  plot_svg_line(&mut svgf, &hline, cyan_1_style).unwrap();
+  plot_svg_line(&mut svgf, &vline, cyan_1_style).unwrap();
   let orange_1_style="stroke:rgb(255,138,0);stroke-width:1";
   plot_svg_our_bez(&mut svgf, &top_bez, 10, orange_1_style).unwrap();
   plot_svg_our_bez(&mut svgf, &bottom_bez, 10, orange_1_style).unwrap();
   plot_svg_our_bez(&mut svgf, &left_bez, 10, orange_1_style).unwrap();
   plot_svg_our_bez(&mut svgf, &right_bez, 10, orange_1_style).unwrap();
+
   writeln!(svgf, "</svg>").unwrap();
+
 }
 
