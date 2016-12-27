@@ -1,3 +1,6 @@
+/// (c) David Alan Gilbert <dave@treblig.org> 2016
+/// Licensed under GPLv3, see the LICENSE file for a full copy
+
 use std::io;
 use std::io::BufReader;
 use std::io::prelude::*;

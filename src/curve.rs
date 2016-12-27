@@ -1,3 +1,6 @@
+/// (c) David Alan Gilbert <dave@treblig.org> 2016
+/// Licensed under GPLv3, see the LICENSE file for a full copy
+
 // A curve to interpolate between points
 // This is currently a Quadratic Bezier; pretty simple.
 

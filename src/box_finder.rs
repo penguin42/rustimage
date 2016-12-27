@@ -1,3 +1,6 @@
+/// (c) David Alan Gilbert <dave@treblig.org> 2016
+/// Licensed under GPLv3, see the LICENSE file for a full copy
+
 use image::*;
 use point_line::*;
 use std::f64;

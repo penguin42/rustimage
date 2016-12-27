@@ -1,9 +1,11 @@
+/// (c) David Alan Gilbert <dave@treblig.org> 2016
+/// Licensed under GPLv3, see the LICENSE file for a full copy
+
 use std::io;
 use std::io::prelude::*;
 
 use image::ImageErr;
 
-/// (c) David Alan Gilbert <dave@treblig.org> 2016
 
 /// Skip whitespace
 pub fn skip_whitespace(f: &mut BufRead) -> Result<(), io::Error> {
