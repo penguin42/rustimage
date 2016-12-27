@@ -9,6 +9,7 @@ mod point_line;
 mod string;
 
 use point_line::*;
+use image::*;
 
 fn plot_svg_line(f: &mut File, l: &point_line::Line, style: &str) -> Result<(), std::io::Error> {
   let (p1, p2) = *l;
@@ -38,7 +39,7 @@ fn main() {
   let file_name = our_args.nth(1).unwrap();
   println!("Filename = {}", file_name);
 
-  let in_image = image::load_pgm(&file_name).unwrap();
+  let in_image = Image::load_pgm(&file_name).unwrap();
   let image_size = in_image.get_size();
 
   let mut svgf = File::create("debug.svg").unwrap();

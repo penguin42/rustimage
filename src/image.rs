@@ -71,31 +71,35 @@ pub fn read_pnm_header(f: &mut BufRead) -> Result<(usize, (usize, usize)), Image
   Ok((subtype as usize, (width, height)))
 }
 
-pub fn load_pgm(file_name: &String) -> Result<Image, ImageErr> {
-  let mut r = BufReader::new(try!(File::open(file_name)));
-
-  let (pnm_type, (my_width, my_height)) = try!(read_pnm_header(&mut r));
-
-  match pnm_type {
-    2 => return Err(ImageErr::WrongSubtype(String::from("Plain PGM not supported"))),
-    5 => (), // that's normal binary PGM that we support
-    _ => return Err(ImageErr::WrongSubtype(format!("PNM type {} is not a PGM and is not supported", pnm_type))),
-  }
-
-  if my_width == 0 || my_height == 0 {
-    return Err(ImageErr::BadHeader(String::from("Width/height can't be 0")));
-  }
-
-  let mut my_data = vec![0 as u8; my_width * my_height];
-  try!(r.read_exact(&mut my_data));
-  let result : Image = Image { width: my_width, height: my_height, data: my_data.into_boxed_slice() };
-
-  println!("Got pgm type {} {}x{}", pnm_type, my_width, my_height);
-
-  Ok(result)
-}
-
 impl Image {
+  pub fn new(width: usize, height: usize) -> Image {
+    Image { width: width, height: height,
+            data: vec![0 as u8; width * height].into_boxed_slice() }
+  }
+
+  pub fn load_pgm(file_name: &String) -> Result<Image, ImageErr> {
+    let mut r = BufReader::new(try!(File::open(file_name)));
+  
+    let (pnm_type, (my_width, my_height)) = try!(read_pnm_header(&mut r));
+  
+    match pnm_type {
+      2 => return Err(ImageErr::WrongSubtype(String::from("Plain PGM not supported"))),
+      5 => (), // that's normal binary PGM that we support
+      _ => return Err(ImageErr::WrongSubtype(format!("PNM type {} is not a PGM and is not supported", pnm_type))),
+    }
+  
+    if my_width == 0 || my_height == 0 {
+      return Err(ImageErr::BadHeader(String::from("Width/height can't be 0")));
+    }
+  
+    let mut result = Image::new(my_width, my_height);
+    try!(r.read_exact(&mut result.data));
+  
+    println!("Got pgm type {} {}x{}", pnm_type, my_width, my_height);
+  
+    Ok(result)
+  }
+
   pub fn save_pgm(&self, file_name: String) -> Result<(), ImageErr> {
     let mut f = try!(File::create(file_name));
     try!(write!(f, "P5\n{} {}\n255\n", self.width, self.height));
