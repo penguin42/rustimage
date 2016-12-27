@@ -145,7 +145,7 @@ fn gen_edge_vector(history: &Vec<Point>) -> Line {
   best_line
 }
 
-pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) {
+fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) {
   let mut cur = *start;
 
   println!("edge_finder: {:?} going {:?}", start, d);
@@ -189,5 +189,34 @@ pub fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) 
 
   let middle_point = vec1[vec1.len()/2];
   (corner1, corner2, middle_point)
+}
+
+// Result is points going clockwise from top left with one midpoint on each line
+pub fn box_finder(i: &Image) -> (Point, Point, Point, Point, Point, Point, Point, Point) {
+  let image_size = i.get_size();
+  let left_middle = Point { x: 0, y: image_size.y/2 };
+  let right_middle = Point { x: image_size.x - 1, y: image_size.y/2 };
+  let top_middle = Point { x: image_size.x/2, y: 0 };
+  let bottom_middle = Point { x: image_size.x/2, y: image_size.y-1 };
+
+  let (left_edge_line_top, left_edge_line_bottom, left_edge_mid) =
+    edge_finder(i, &left_middle, Direction::Right);
+  let (right_edge_line_bottom, right_edge_line_top, right_edge_mid) =
+    edge_finder(i, &right_middle, Direction::Left);
+  let (top_edge_line_right, top_edge_line_left, top_edge_mid) =
+    edge_finder(i, &top_middle, Direction::Down);
+  let (bottom_edge_line_left, bottom_edge_line_right, bottom_edge_mid) =
+    edge_finder(i, &bottom_middle, Direction::Up);
+
+  let top_left = line_intersection(&left_edge_line_top, &top_edge_line_left);
+  let top_right = line_intersection(&right_edge_line_top, &top_edge_line_right);
+  let bottom_left = line_intersection(&left_edge_line_bottom, &bottom_edge_line_left);
+  let bottom_right = line_intersection(&right_edge_line_bottom, &bottom_edge_line_right);
+
+  // Going clockwise from top left
+  (top_left, top_edge_mid, top_right,
+             right_edge_mid, bottom_right,
+             bottom_edge_mid, bottom_left,
+   left_edge_mid)
 }
 
