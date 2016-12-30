@@ -41,8 +41,8 @@ pub type Line = (Point, Point);
 
 impl Point {
   pub fn step(&mut self, d: Direction, i: &Image, amount: usize) -> bool {
-    let &mut tomod;
-    let &mut limit;
+    let tomod;
+    let limit;
     let inc : i8;
     match d {
       Direction::Down => {

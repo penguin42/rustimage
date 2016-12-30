@@ -53,23 +53,24 @@ pub fn read_pnm_header(f: &mut BufRead) -> Result<(usize, (usize, usize)), Image
   // Note that PAM format files are different from the other pnm and identify
   // the width/height fields with text not just raw figures, but I'm not dealing
   // with that now
+  let it = &mut f.bytes().peekable();
 
   // White space and the width
-  try!(skip_whitespace(f));
-  let width = try!(read_integer(f));
+  try!(skip_whitespace(it));
+  let width = try!(read_integer(it));
 
   // White space and then height
-  try!(skip_whitespace(f));
-  let height = try!(read_integer(f));
+  try!(skip_whitespace(it));
+  let height = try!(read_integer(it));
   
   // White space and then max grey (We only support 255)
-  try!(skip_whitespace(f));
-  let max_grey = try!(read_integer(f));
+  try!(skip_whitespace(it));
+  let max_grey = try!(read_integer(it));
   if max_grey != 255 {
     return Err(ImageErr::BadHeader(String::from("Unsupported grey depth")));
   }
-  // *1* white space and then data - note the read_integer will have
-  // consumed that white space
+  // *1* white space and then data - note the peekable will have
+  // consumed that white space even though read_integer didn't next it
 
   Ok((subtype as usize, (width, height)))
 }
