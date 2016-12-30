@@ -8,7 +8,7 @@ use image::ImageErr;
 
 
 /// Skip whitespace
-pub fn skip_whitespace(it: &mut iter::Peekable<io::Bytes<&mut io::BufRead>>) -> Result<(), io::Error> {
+pub fn skip_whitespace<E, I: Iterator<Item=Result<u8, E>>>(it: &mut iter::Peekable<I>) -> Result<(), E> {
   let mut in_comment = false;
 
   loop {
@@ -40,7 +40,7 @@ pub fn skip_whitespace(it: &mut iter::Peekable<io::Bytes<&mut io::BufRead>>) -> 
 }
 
 /// Reads an integer from the stream
-pub fn read_integer(it: &mut iter::Peekable<io::Bytes<&mut io::BufRead>>) -> Result<usize, ImageErr> {
+pub fn read_integer<I: Iterator<Item=Result<u8, io::Error>>>(it: &mut iter::Peekable<I>) -> Result<usize, ImageErr> {
   let mut result : usize = 0;
   let mut have_digit : bool = false;
 
