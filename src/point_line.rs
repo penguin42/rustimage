@@ -6,16 +6,13 @@ use std::f64;
 use image::*;
 
 #[derive(Copy, Clone, Debug)]
-pub struct Point {
-  pub x: usize,
-  pub y: usize
+pub struct PointGen<T> {
+  pub x: T,
+  pub y: T
 }
 
-#[derive(Copy, Clone, Debug)]
-pub struct Pointf {
-  pub x: f64,
-  pub y: f64
-}
+pub type Point = PointGen<usize>;
+pub type Pointf = PointGen<f64>;
 
 impl From<Point> for Pointf {
   fn from(p : Point) -> Pointf {
