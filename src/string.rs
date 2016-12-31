@@ -1,14 +1,15 @@
 /// (c) David Alan Gilbert <dave@treblig.org> 2016
 /// Licensed under GPLv3, see the LICENSE file for a full copy
 
-use std::io;
+use std::convert;
 use std::iter;
 
 use image::ImageErr;
 
 
 /// Skip whitespace
-pub fn skip_whitespace<E, I: Iterator<Item=Result<u8, E>>>(it: &mut iter::Peekable<I>) -> Result<(), E> {
+pub fn skip_whitespace<E, I>(it: &mut iter::Peekable<I>) -> Result<(), E>
+  where I: Iterator<Item=Result<u8, E>> {
   let mut in_comment = false;
 
   loop {
@@ -40,7 +41,9 @@ pub fn skip_whitespace<E, I: Iterator<Item=Result<u8, E>>>(it: &mut iter::Peekab
 }
 
 /// Reads an integer from the stream
-pub fn read_integer<I: Iterator<Item=Result<u8, io::Error>>>(it: &mut iter::Peekable<I>) -> Result<usize, ImageErr> {
+pub fn read_integer<I,E>(it: &mut iter::Peekable<I>) -> Result<usize, ImageErr>
+  where I: Iterator<Item=Result<u8, E>>,
+        ImageErr: convert::From<E> {
   let mut result : usize = 0;
   let mut have_digit : bool = false;
 
