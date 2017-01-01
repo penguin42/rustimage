@@ -19,7 +19,7 @@ pub fn transform(i: &image::Image, o: &mut image::Image,
     // For each horizontal line we create a bezier through the source
     let line_bez = curve::Bezierq::through(left_point, mid_point, right_point, 0.5);
 
-    println!("transform: y={} t_y={} {:?}/{:?}/{:?}", y, t_y, left_point, mid_point, right_point);
+    //println!("transform: y={} t_y={} {:?}/{:?}/{:?}", y, t_y, left_point, mid_point, right_point);
     for x in 0..out_size.x {
       let t_x = x as f64 / (out_size.x as f64);
       let cur_point = Point::from(line_bez.interp(t_x));

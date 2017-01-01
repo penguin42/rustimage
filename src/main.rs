@@ -53,6 +53,14 @@ fn main() {
 
   let mut out_image = Image::new(4000,2000); // TODO: Make size configurable
 
+  let hdistance = left_edge_mid.distance(&right_edge_mid);
+  let vdistance = top_edge_mid.distance(&bottom_edge_mid);
+
+  let ratio = hdistance/vdistance;
+
+  println!("points tl/tr/br/bl={:?}/{:?}/{:?}/{:?}", top_left, top_right, bottom_right, bottom_left);
+  println!("hdistance={} vdistance={} ratio={}", hdistance, vdistance, ratio);
+
   let hline = (left_edge_mid, right_edge_mid);
   let vline = (top_edge_mid, bottom_edge_mid);
 
