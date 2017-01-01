@@ -97,7 +97,6 @@ fn main() {
                                         Pointf::from(bottom_right),
                                         0.5);
 
-  let green_1_style="stroke:rgb(0,255,0);stroke-width:1";
   let cyan_1_style="stroke:rgb(0,255,255);stroke-width:1";
   plot_svg_line(&mut svgf, &hline, cyan_1_style).unwrap();
   plot_svg_line(&mut svgf, &vline, cyan_1_style).unwrap();
