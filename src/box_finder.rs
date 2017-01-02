@@ -5,9 +5,22 @@ use image::*;
 use point_line::*;
 use std::f64;
 
-const PATH_LINE_BASE_FRAC : f64 = 0.95;
-const PATH_LINE_END_FRAC : f64 = 0.90;
+const PATH_LINE_BASE_FRAC : f64 = 0.90;
+const PATH_LINE_END_FRAC : f64 = 0.85;
 const PATH_LINE_SAMPLES : usize = 50;
+
+// Find the brightness at the edge pointed to by d from our current location
+fn edge_brightness(i: &Image, start: &Point, d: Direction) -> u8 {
+  
+  let p = match d {
+    Direction::Down => Point { x: start.x, y: i.get_size().y-1 },
+    Direction::Up   => Point { x: start.x, y: 0 },
+    Direction::Left => Point { x: 0,  y: start.y },
+    Direction::Right => Point { x: i.get_size().x-1, y: start.y },
+  };
+
+  i[p]
+}
 
 // Hmm this might be tricky - my top edge brightness is so bridgt I'm seeing speckling in the line
 // the other edges we're good down to about 25 as black  - same problem on bottom edge
@@ -180,9 +193,25 @@ fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) {
   }
   cur = *start;
 
-  let light_to_dark_threshold = (darkest as f64 * 0.8) as u8;
-  println!("Edge for direction {:?} darkest/lightest={}/{} ltd-threshold={}", d,
-           darkest, lightest, light_to_dark_threshold);
+  // Step 1a: A local lightest/darkest - 10pixels around the current position
+  let mut local_lightest = 0;
+  let mut local_darkest = 255;
+  let mut clk_cur = *start;
+  let mut cclk_cur = *start;
+  for _ in 0..10 {
+    if i[clk_cur] < local_darkest { local_darkest = i[clk_cur]; };
+    if i[cclk_cur] < local_darkest { local_darkest = i[cclk_cur]; };
+    if i[clk_cur] > local_lightest { local_lightest = i[clk_cur]; };
+    if i[cclk_cur] > local_lightest { local_lightest = i[cclk_cur]; };
+    if !clk_cur.step(d.clockwise(), i, 1) { break; };
+    if !cclk_cur.step(d.cntr_clockwise(), i, 1) { break; };
+  }
+
+  let light_to_dark_threshold = (local_darkest as f64 * 0.6) as u8;
+  println!("Edge for direction {:?} darkest/lightest={}/{} local_d/l={}/{} ltd-threshold={}", d,
+           darkest, lightest,
+           local_darkest, local_lightest,
+           light_to_dark_threshold);
   
   // Step2: Find the edge of the line
   'find_outer_edge: loop {
@@ -191,11 +220,15 @@ fn edge_finder(i: &Image, start: &Point, d: Direction) -> (Line,Line,Point) {
   }
   let outer_edge_marker = cur;
 
-  let dark_to_light_threshold = darkest;
+  let mut dark_to_light_threshold = darkest;
+  if i[cur] > dark_to_light_threshold {
+    dark_to_light_threshold = i[cur]
+  }
+
   println!("dtl-threshold={} 1st point={}", dark_to_light_threshold, i[cur]);
 
   // Step3: Find the inner edge of the line
-  let (inner_edge_marker,(line_darkest,line_lightest,line_mean)) = step_to_light(i, &cur, d, dark_to_light_threshold);
+  let (inner_edge_marker,_) = step_to_light(i, &cur, d, local_darkest);
 
   // Step4: Find the midpoint of the edge
   let line_width = inner_edge_marker.distance(&outer_edge_marker);
